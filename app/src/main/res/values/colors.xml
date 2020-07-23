@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="colorPrimary">@android:color/black</color>
+  <color name="colorPrimaryDark">@android:color/black</color>
+  <color name="colorAccent">@android:color/white</color>
+
+  <color name="sticker_border">#ff666666</color>
+  <color name="black">#000000</color>
+  <color name="xxx">#DDDDDD</color>
+  <color name="xcxx">#30373f</color>
+</resources>
