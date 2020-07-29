@@ -42,6 +42,11 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.kbeanie.multipicker.api.CameraImagePicker;
+import com.kbeanie.multipicker.api.ImagePicker;
+import com.kbeanie.multipicker.api.Picker;
+import com.kbeanie.multipicker.api.callbacks.ImagePickerCallback;
+import com.kbeanie.multipicker.api.entity.ChosenImage;
 import com.xiaopo.flying.sticker.BitmapStickerIcon;
 import com.xiaopo.flying.sticker.DeleteIconEvent;
 import com.xiaopo.flying.sticker.DrawableSticker;
@@ -84,7 +89,9 @@ public class MainActivity extends AppCompatActivity {
     Uri selectedImageUri, tempUri;
     File file;
     String fileStringimage;
-
+    CameraImagePicker cameraImagePicker;
+    ImagePicker imagePicker;
+    String outputPath;
     String text;
 
     private final String[] option = {"Take from Camera", "Select from Gallery"};
@@ -106,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
     int[] gradient_colors;
     int image_text_color, color_pattern, color_gradient, pattern_code = 0;
     GradientDrawable gd;
+    ColorUtils colorUtils = new ColorUtils();
 
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
@@ -414,8 +422,10 @@ public class MainActivity extends AppCompatActivity {
                                 photoView.setImageBitmap(null);
                                 photoView.setBackgroundDrawable(null);
                                 photoView.setBackground(gd);
-                                color_gradient = ColorUtils.getDominantColor1(convertToBitmap(gd,
-                                        photoView.getWidth(), photoView.getHeight()), i);
+
+                                Bitmap new_bitmap1 = getResizedBitmap(convertToBitmap(gd,
+                                        photoView.getWidth(), photoView.getHeight()), 600);
+                                color_gradient = colorUtils.getDominantColor1(new_bitmap1, i);
                                 ACTION_CODE = 2;
                             }
 
@@ -456,6 +466,8 @@ public class MainActivity extends AppCompatActivity {
 
     /*Add text in Editor*/
     public void testAdd(View view, final String text) {
+
+
         v = view;
         final TextSticker sticker = new TextSticker(MainActivity.this);
 
@@ -780,8 +792,11 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
-
+      /*  if (bitmap != null) {
+            if (i == 1) {
+                image_text_color = ColorUtils.getDominantColor1(bitmap, 1);
+            } else image_text_color = ColorUtils.getDominantColor1(bitmap, 0);
+        }*/
         dialog_btn_save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -816,6 +831,7 @@ public class MainActivity extends AppCompatActivity {
                         /*IMAGE USING SET TEXT COLOR*/
                         if (ACTION_CODE == 1) {
                             sticker.setTextColor(image_text_color);
+
                         }
                         /*GRADIENT BG SET TEXT COLOR*/
                         if (ACTION_CODE == 2) {
@@ -878,13 +894,47 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void callCamera() {
-        Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        startActivityForResult(takePicture, 0);
+//        Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+//        startActivityForResult(takePicture, 0);
+
+        cameraImagePicker = new CameraImagePicker(MainActivity.this);
+        cameraImagePicker.setImagePickerCallback(
+                new ImagePickerCallback() {
+                    @Override
+                    public void onImagesChosen(List<ChosenImage> images) {
+
+
+                    }
+
+                    @Override
+                    public void onError(String message) {
+
+                    }
+                }
+        );
+        outputPath = cameraImagePicker.pickImage();
     }
 
     private void callGallery() {
-        Intent pickPhoto = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        startActivityForResult(pickPhoto, 1);
+//        Intent pickPhoto = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//        startActivityForResult(pickPhoto, 1);
+
+        imagePicker = new ImagePicker(MainActivity.this);
+        imagePicker.setImagePickerCallback(
+                new ImagePickerCallback() {
+                    @Override
+                    public void onImagesChosen(List<ChosenImage> images) {
+
+                    }
+
+                    @Override
+                    public void onError(String message) {
+
+                    }
+                }
+        );
+
+        imagePicker.pickImage();
     }
 
     @Override
@@ -892,20 +942,25 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode != RESULT_CANCELED) {
             switch (requestCode) {
-                case 0:
-                    bitmap = (Bitmap) data.getExtras().get("data");
+                case Picker.PICK_IMAGE_CAMERA:
 
+                    cameraImagePicker.submit(data);
+
+//                    bitmap = (Bitmap) data.getExtras().get("data");
+                    bitmap = BitmapFactory.decodeFile(outputPath);
+
+                    Log.i(TAG, "onActivityResult: bitmap  " + bitmap + "------------" + outputPath);
                     /* PATTERN BG SET*/
                     if (pattern_code == 1) {
 
-                        tempUri = getImageUri(MainActivity.this, bitmap);
-                        file = new File(getRealPathFromURI(tempUri));
-                        fileStringimage = file.toString();
+//                        tempUri = getImageUri(MainActivity.this, bitmap);
+//                        file = new File(getRealPathFromURI(tempUri));
+//                        fileStringimage = file.toString();
 
                         photoView.setImageBitmap(null);
                         photoView.setBackgroundDrawable(null);
-                        Bitmap bitmap2 = BitmapFactory.decodeFile(fileStringimage);
-                        BitmapDrawable bitmapDrawable = new BitmapDrawable(bitmap2);
+//                        Bitmap bitmap2 = BitmapFactory.decodeFile(fileStringimage);
+                        BitmapDrawable bitmapDrawable = new BitmapDrawable(bitmap);
                         bitmapDrawable.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
                         photoView.setBackgroundDrawable(bitmapDrawable);
 
@@ -916,25 +971,32 @@ public class MainActivity extends AppCompatActivity {
                         photoView.setImageBitmap(bitmap);
                         ACTION_CODE = 1;
                     }
-                    if (i == 1) {
-                        image_text_color = ColorUtils.getDominantColor1(bitmap, 1);
-                    } else image_text_color = ColorUtils.getDominantColor1(bitmap, 0);
 
+                    Bitmap new_bitmap1 = getResizedBitmap(bitmap, 600);
+                    if (i == 1) {
+                        image_text_color = ColorUtils.getDominantColor1(new_bitmap1, 1);
+                    } else image_text_color = ColorUtils.getDominantColor1(new_bitmap1, 0);
                     break;
-                case 1:
+                case Picker.PICK_IMAGE_DEVICE:
                     if (resultCode == RESULT_OK && data != null) {
                         selectedImageUri = data.getData();
+                        imagePicker.submit(data);
                         try {
                             bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), selectedImageUri);
 
                             /* PATTERN BG SET*/
                             if (pattern_code == 1) {
-                                File file1 = new File(getRealPathFromURI(selectedImageUri));
-                                fileStringimage = file1.toString();
+//                                File file1 = new File(getPath(selectedImageUri));
+//                                fileStringimage = file1.toString();
+
+                                Log.i(TAG, "onActivityResult: selectedImageUri  "+selectedImageUri);
+                                Log.i(TAG, "onActivityResult: fileStringimage  "+fileStringimage);
+
+
                                 photoView.setImageBitmap(null);
                                 photoView.setBackgroundDrawable(null);
-                                Bitmap bitmap2 = BitmapFactory.decodeFile(fileStringimage);
-                                BitmapDrawable bitmapDrawable = new BitmapDrawable(bitmap2);
+//                                Bitmap bitmap2 = BitmapFactory.decodeFile(fileStringimage);
+                                BitmapDrawable bitmapDrawable = new BitmapDrawable(bitmap);
                                 bitmapDrawable.setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
                                 photoView.setBackgroundDrawable(bitmapDrawable);
 
@@ -945,10 +1007,12 @@ public class MainActivity extends AppCompatActivity {
                                 photoView.setImageURI(selectedImageUri);
                                 ACTION_CODE = 1;
                             }
+
+                            Bitmap new_bitmap = getResizedBitmap(bitmap, 600);
                             if (i == 1) {
-                                image_text_color = ColorUtils.getDominantColor1(bitmap, 1);
+                                image_text_color = ColorUtils.getDominantColor1(new_bitmap, 1);
                             } else {
-                                image_text_color = ColorUtils.getDominantColor1(bitmap, 0);
+                                image_text_color = ColorUtils.getDominantColor1(new_bitmap, 0);
                             }
 
                         } catch (IOException e) {
@@ -957,7 +1021,26 @@ public class MainActivity extends AppCompatActivity {
                     }
                     break;
             }
+
         }
+    }
+
+    @SuppressLint("LongLogTag")
+    public Bitmap getResizedBitmap(Bitmap image, int maxSize) {
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+//        Log.i(TAG, " size_image_original::=" + width + "..*.." + height);
+
+        float bitmapRatio = (float) width / (float) height;
+        if (bitmapRatio > 1) {
+            width = maxSize;
+            height = (int) (width / bitmapRatio);
+        } else {
+            height = maxSize;
+            width = (int) (height * bitmapRatio);
+        }
+        return Bitmap.createScaledBitmap(image, width, height, true);
     }
 
     public Uri getImageUri(Context inContext, Bitmap inImage) {
@@ -966,7 +1049,7 @@ public class MainActivity extends AppCompatActivity {
         return Uri.parse(path);
     }
 
-    public String getRealPathFromURI(Uri uri) {
+  /*  public String getRealPathFromURI(Uri uri) {
         String path = "";
         if (getContentResolver() != null) {
             Cursor cursor = getContentResolver().query(uri, null, null, null, null);
@@ -978,5 +1061,34 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return path;
+    }*/
+  public String getPath(Uri uri) {
+      String[] projection = { MediaStore.Images.Media.DATA };
+      Cursor cursor = managedQuery(uri, projection, null, null, null);
+      int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+      cursor.moveToFirst();
+      return cursor.getString(column_index);
+  }
+    public String getRealPathFromURI( Uri contentUri) {
+        Cursor cursor = null;
+        try {
+
+            if("content".equals(contentUri.getScheme())) {
+                String[] proj = {MediaStore.Images.Media.DATA};
+                cursor = getContentResolver().query(contentUri, proj, null, null, null);
+                int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                cursor.moveToFirst();
+                return cursor.getString(column_index);
+            }
+            else{
+                return contentUri.getPath();
+            }
+
+
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
     }
 }
