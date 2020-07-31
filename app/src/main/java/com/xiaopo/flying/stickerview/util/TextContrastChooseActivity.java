@@ -13,6 +13,7 @@ import com.xiaopo.flying.stickerview.R;
 public class TextContrastChooseActivity extends AppCompatActivity {
 
     RadioButton btn_all_text_color_contrast,btn_only_black_and_white_text_color;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -20,21 +21,25 @@ public class TextContrastChooseActivity extends AppCompatActivity {
 
         btn_all_text_color_contrast= (RadioButton) findViewById(R.id.all_text_contrast_color);
         btn_only_black_and_white_text_color= (RadioButton) findViewById(R.id.only_black_and_white_text_color);
-
         btn_all_text_color_contrast.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent1 = new Intent(TextContrastChooseActivity.this, MainActivity.class);
-                intent1.putExtra("text constrast", 1);
-                startActivity(intent1);
+
+                    Intent intent1 = new Intent(TextContrastChooseActivity.this, MainActivity.class);
+                    intent1.putExtra("text contrast", 1);
+                    intent1.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startActivity(intent1);
+
             }
         });
         btn_only_black_and_white_text_color.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent1 = new Intent(TextContrastChooseActivity.this, MainActivity.class);
-                intent1.putExtra("text constrast", 2);
+                intent1.putExtra("text contrast", 2);
+                intent1.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent1);
+
             }
         });
     }

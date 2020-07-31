@@ -115,6 +115,8 @@ public class MainActivity extends AppCompatActivity {
     GradientDrawable gd;
     ColorUtils colorUtils = new ColorUtils();
 
+    final int ALL_PERMISSIONS_CAMERA = 101;
+    final int ALL_PERMISSIONS_GALLERY = 102;
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     @Override
@@ -122,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         this.fontProvider = new FontProvider(getResources());
-        i = getIntent().getIntExtra("text constrast", 1);
+        i = getIntent().getIntExtra("text contrast", 1);
 
         stickerView = (StickerView) findViewById(R.id.sticker_view);
         photoView = (PhotoView) findViewById(R.id.photoView);
@@ -293,7 +295,7 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+       /* if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
                 || ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
                 || ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
@@ -302,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
                             Manifest.permission.READ_EXTERNAL_STORAGE}, PERM_RQST_CODE);
         } else {
 //      loadSticker();
-        }
+        }*/
     }
 
 
@@ -324,14 +326,6 @@ public class MainActivity extends AppCompatActivity {
                 , Sticker.Position.TOP);
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == PERM_RQST_CODE && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//      loadSticker();
-        }
-    }
 
     public void testReplace(View view) {
         if (stickerView.replace(sticker)) {
@@ -425,7 +419,7 @@ public class MainActivity extends AppCompatActivity {
 
                                 Bitmap new_bitmap1 = getResizedBitmap(convertToBitmap(gd,
                                         photoView.getWidth(), photoView.getHeight()), 600);
-                                color_gradient = colorUtils.getDominantColor1(new_bitmap1, i);
+                                color_gradient = ColorUtils.getDominantColor1(new_bitmap1, i);
                                 ACTION_CODE = 2;
                             }
 
@@ -792,11 +786,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-      /*  if (bitmap != null) {
-            if (i == 1) {
-                image_text_color = ColorUtils.getDominantColor1(bitmap, 1);
-            } else image_text_color = ColorUtils.getDominantColor1(bitmap, 0);
-        }*/
+
         dialog_btn_save.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -873,6 +863,29 @@ public class MainActivity extends AppCompatActivity {
         return lines.length - 1;
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == ALL_PERMISSIONS_CAMERA) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                callCamera();
+            } else {
+                Toast.makeText(MainActivity.this, " Permission Denied by User", Toast.LENGTH_SHORT).show();
+            }
+
+        }
+        if (requestCode == ALL_PERMISSIONS_GALLERY) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                callGallery();
+            } else {
+                Toast.makeText(MainActivity.this, " Permission Denied by User", Toast.LENGTH_SHORT).show();
+            }
+
+        }
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     public void optionDialogg(final View view) {
 
         AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(this);
@@ -881,14 +894,22 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 if ("Take from Camera".equals(option[which])) {
-                    callCamera();
+                    final String[] permissions = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
+                    ActivityCompat.requestPermissions(MainActivity.this, permissions, ALL_PERMISSIONS_CAMERA);
+
                 }
+//......................................................................................................................
+
                 if ("Select from Gallery".equals(option[which])) {
-                    callGallery();
+                    final String[] permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE};
+                    ActivityCompat.requestPermissions(MainActivity.this, permissions, ALL_PERMISSIONS_GALLERY);
+
                 }
             }
         });
+
         AlertDialog alertDialog = dialogBuilder.create();
+
         alertDialog.show();
 
     }
@@ -989,8 +1010,8 @@ public class MainActivity extends AppCompatActivity {
 //                                File file1 = new File(getPath(selectedImageUri));
 //                                fileStringimage = file1.toString();
 
-                                Log.i(TAG, "onActivityResult: selectedImageUri  "+selectedImageUri);
-                                Log.i(TAG, "onActivityResult: fileStringimage  "+fileStringimage);
+                                Log.i(TAG, "onActivityResult: selectedImageUri  " + selectedImageUri);
+                                Log.i(TAG, "onActivityResult: fileStringimage  " + fileStringimage);
 
 
                                 photoView.setImageBitmap(null);
@@ -1049,38 +1070,38 @@ public class MainActivity extends AppCompatActivity {
         return Uri.parse(path);
     }
 
-  /*  public String getRealPathFromURI(Uri uri) {
-        String path = "";
-        if (getContentResolver() != null) {
-            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-            if (cursor != null) {
-                cursor.moveToFirst();
-                int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
-                path = cursor.getString(idx);
-                cursor.close();
-            }
-        }
-        return path;
-    }*/
-  public String getPath(Uri uri) {
-      String[] projection = { MediaStore.Images.Media.DATA };
-      Cursor cursor = managedQuery(uri, projection, null, null, null);
-      int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-      cursor.moveToFirst();
-      return cursor.getString(column_index);
-  }
-    public String getRealPathFromURI( Uri contentUri) {
+    /*  public String getRealPathFromURI(Uri uri) {
+          String path = "";
+          if (getContentResolver() != null) {
+              Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+              if (cursor != null) {
+                  cursor.moveToFirst();
+                  int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
+                  path = cursor.getString(idx);
+                  cursor.close();
+              }
+          }
+          return path;
+      }*/
+    public String getPath(Uri uri) {
+        String[] projection = {MediaStore.Images.Media.DATA};
+        Cursor cursor = managedQuery(uri, projection, null, null, null);
+        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+        cursor.moveToFirst();
+        return cursor.getString(column_index);
+    }
+
+    public String getRealPathFromURI(Uri contentUri) {
         Cursor cursor = null;
         try {
 
-            if("content".equals(contentUri.getScheme())) {
+            if ("content".equals(contentUri.getScheme())) {
                 String[] proj = {MediaStore.Images.Media.DATA};
                 cursor = getContentResolver().query(contentUri, proj, null, null, null);
                 int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
                 cursor.moveToFirst();
                 return cursor.getString(column_index);
-            }
-            else{
+            } else {
                 return contentUri.getPath();
             }
 
@@ -1090,5 +1111,12 @@ public class MainActivity extends AppCompatActivity {
                 cursor.close();
             }
         }
+    }
+
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
     }
 }

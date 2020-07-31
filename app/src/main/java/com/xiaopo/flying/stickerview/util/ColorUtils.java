@@ -82,7 +82,6 @@ public class ColorUtils {
                 }
             }
             rgb[i] = val;
-
         }
         int dominantColor = 0;
 
